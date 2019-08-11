@@ -493,9 +493,6 @@ int php_init_config(void)
 
 		/* Add environment location */
 		if (env_location[0]) {
-			if (*php_ini_search_path) {
-				strlcat(php_ini_search_path, paths_separator, search_path_size);
-			}
 			strlcat(php_ini_search_path, env_location, search_path_size);
 			php_ini_file_name = env_location;
 		}
