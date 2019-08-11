@@ -432,23 +432,23 @@ static char* get_env_location(const char *envname)
 		size = GetEnvironmentVariableA(envname, &dummybuf, 0);
 		if (GetLastError() == ERROR_ENVVAR_NOT_FOUND) {
 			/* The environment variable doesn't exist. */
-			env_location = "";
-		} else {
-			if (size == 0) {
-				env_location = "";
-			} else {
-				size = GetEnvironmentVariableA(envname, phprc_path, size);
-				if (size == 0) {
-					env_location = "";
-				} else {
-					env_location = phprc_path;
-				}
-			}
+			return "";
 		}
+
+		if (size == 0) {
+			return "";
+		}
+
+		size = GetEnvironmentVariableA(envname, phprc_path, size);
+		if (size == 0) {
+			return "";
+		}
+
+		env_location = phprc_path;
 	}
 #else
 	if (!env_location) {
-		env_location = "";
+		return "";
 	}
 #endif
 
