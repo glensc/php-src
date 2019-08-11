@@ -410,6 +410,52 @@ static void php_load_zend_extension_cb(void *arg) { }
 #endif
 /* }}} */
 
+/* {{{ get_env_location
+ */
+static char* get_env_location(const char *envname)
+{
+	char *env_location = getenv(envname);
+#ifdef PHP_WIN32
+	char phprc_path[MAXPATHLEN];
+#endif
+
+#ifdef PHP_WIN32
+	if (!env_location) {
+		char dummybuf;
+		int size;
+
+		SetLastError(0);
+
+		/*If the given buffer is not large enough to hold the data, the return value is
+		the buffer size,  in characters, required to hold the string and its terminating
+		null character. We use this return value to alloc the final buffer. */
+		size = GetEnvironmentVariableA(envname, &dummybuf, 0);
+		if (GetLastError() == ERROR_ENVVAR_NOT_FOUND) {
+			/* The environment variable doesn't exist. */
+			env_location = "";
+		} else {
+			if (size == 0) {
+				env_location = "";
+			} else {
+				size = GetEnvironmentVariableA(envname, phprc_path, size);
+				if (size == 0) {
+					env_location = "";
+				} else {
+					env_location = phprc_path;
+				}
+			}
+		}
+	}
+#else
+	if (!env_location) {
+		env_location = "";
+	}
+#endif
+
+	return env_location;
+}
+/* }}} */
+
 /* {{{ append_ini_path
  */
 static void append_ini_path(char *php_ini_search_path, int search_path_size, char *path)
@@ -455,50 +501,14 @@ int php_init_config(void)
 	} else if (!sapi_module.php_ini_ignore) {
 		int search_path_size;
 		char *default_location;
-		char *env_location;
+		char *env_location = get_env_location("PHPRC");
 #ifdef PHP_WIN32
 		char *reg_location;
-		char phprc_path[MAXPATHLEN];
 #endif
 
-		env_location = getenv("PHPRC");
-
-#ifdef PHP_WIN32
-		if (!env_location) {
-			char dummybuf;
-			int size;
-
-			SetLastError(0);
-
-			/*If the given buffer is not large enough to hold the data, the return value is
-			the buffer size,  in characters, required to hold the string and its terminating
-			null character. We use this return value to alloc the final buffer. */
-			size = GetEnvironmentVariableA("PHPRC", &dummybuf, 0);
-			if (GetLastError() == ERROR_ENVVAR_NOT_FOUND) {
-				/* The environment variable doesn't exist. */
-				env_location = "";
-			} else {
-				if (size == 0) {
-					env_location = "";
-				} else {
-					size = GetEnvironmentVariableA("PHPRC", phprc_path, size);
-					if (size == 0) {
-						env_location = "";
-					} else {
-						env_location = phprc_path;
-					}
-				}
-			}
-		}
-#else
-		if (!env_location) {
-			env_location = "";
-		}
-#endif
 		/*
 		 * Prepare search path
 		 */
-
 		search_path_size = MAXPATHLEN * 4 + (int)strlen(env_location) + 3 + 1;
 		php_ini_search_path = (char *) emalloc(search_path_size);
 		free_ini_search_path = 1;
