@@ -177,7 +177,7 @@ PHPAPI void config_zval_dtor(zval *zvalue)
 		zend_string_release_ex(Z_STR_P(zvalue), 1);
 	}
 }
-/* Reset / free active_ini_sectin global */
+/* Reset / free active_ini_section global */
 #define RESET_ACTIVE_INI_HASH() do { \
 	active_ini_hash = NULL;          \
 	is_special_section = 0;          \
