@@ -432,27 +432,27 @@ static char* get_env_location(const char *envname)
 		size = GetEnvironmentVariableA(envname, &dummybuf, 0);
 		if (GetLastError() == ERROR_ENVVAR_NOT_FOUND) {
 			/* The environment variable doesn't exist. */
-			return "";
+			return NULL;
 		}
 
 		if (size == 0) {
-			return "";
+			return NULL;
 		}
 
 		size = GetEnvironmentVariableA(envname, phprc_path, size);
 		if (size == 0) {
-			return "";
+			return NULL;
 		}
 
 		env_location = phprc_path;
 	}
 #else
 	if (!env_location) {
-		return "";
+		return NULL;
 	}
 #endif
 
-	return env_location;
+	return estrdup(env_location);
 }
 /* }}} */
 
@@ -518,6 +518,10 @@ int php_init_config(void)
 		if (env_location[0]) {
 			append_ini_path(php_ini_search_path, search_path_size, env_location);
 			php_ini_file_name = env_location;
+		}
+
+		if (env_location) {
+			efree(env_location);
 		}
 
 #ifdef PHP_WIN32
